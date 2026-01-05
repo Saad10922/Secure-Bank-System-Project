@@ -59,9 +59,7 @@ export function BankAdminDashboard({ onLogout }) {
     setShowUpdateDialog(true);
   };
   return <div className="min-h-screen bg-background">
-    {
-      /* Header */
-    }
+
     <header className="bg-[#0f3460] text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -81,9 +79,7 @@ export function BankAdminDashboard({ onLogout }) {
     </header>
 
     <div className="max-w-7xl mx-auto p-6">
-      {
-        /* Status Cards */
-      }
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 border-l-4 border-l-[#0f3460]">
           <div className="flex items-center justify-between">
@@ -123,9 +119,7 @@ export function BankAdminDashboard({ onLogout }) {
         </Card>
       </div>
 
-      {
-        /* Main Actions */
-      }
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
         <Button
           onClick={() => setActiveTab("upload")}
@@ -161,9 +155,7 @@ export function BankAdminDashboard({ onLogout }) {
         </Button>
       </div>
 
-      {
-        /* Content Area */
-      }
+
       <Card className="p-6">
         {activeTab === "upload" && <div className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
@@ -343,9 +335,7 @@ export function BankAdminDashboard({ onLogout }) {
       </Card>
     </div>
 
-    {
-      /* Delete Confirmation Dialog */
-    }
+
     <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -366,9 +356,7 @@ export function BankAdminDashboard({ onLogout }) {
       </AlertDialogContent>
     </AlertDialog>
 
-    {
-      /* Update Confirmation Dialog */
-    }
+
     <AlertDialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
       <AlertDialogContent>
         <AlertDialogHeader>

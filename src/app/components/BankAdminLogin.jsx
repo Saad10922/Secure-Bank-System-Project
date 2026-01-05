@@ -23,9 +23,7 @@ export function BankAdminLogin({ onLogin, onBack }) {
       </Button>
 
       <Card className="p-8 shadow-2xl bg-white">
-        {
-          /* Header */
-        }
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0f3460] rounded-xl mb-4">
             <Shield className="w-9 h-9 text-white" />
@@ -36,9 +34,7 @@ export function BankAdminLogin({ onLogin, onBack }) {
           </p>
         </div>
 
-        {
-          /* Security Badge */
-        }
+
         <div className="bg-[#e8f1f5] border border-[#0f3460]/20 rounded-lg p-3 mb-6">
           <div className="flex items-center text-sm text-[#0f3460]">
             <Lock className="w-4 h-4 mr-2" />
@@ -46,9 +42,7 @@ export function BankAdminLogin({ onLogin, onBack }) {
           </div>
         </div>
 
-        {
-          /* Login Form */
-        }
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
@@ -84,9 +78,6 @@ export function BankAdminLogin({ onLogin, onBack }) {
           </Button>
         </form>
 
-        {
-          /* Footer Notice */
-        }
         <div className="mt-6 pt-6 border-t">
           <p className="text-xs text-muted-foreground text-center">
             All login attempts are logged and monitored for security compliance

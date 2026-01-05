@@ -23,9 +23,7 @@ export function SystemAdminLogin({ onLogin, onBack }) {
       </Button>
 
       <Card className="p-8 shadow-2xl">
-        {
-          /* Header */
-        }
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-[#16a34a] rounded-xl mb-4">
             <Settings className="w-9 h-9 text-white" />
@@ -36,9 +34,7 @@ export function SystemAdminLogin({ onLogin, onBack }) {
           </p>
         </div>
 
-        {
-          /* Access Badge */
-        }
+
         <div className="bg-[#dcfce7] border border-[#16a34a]/20 rounded-lg p-3 mb-6">
           <div className="flex items-center text-sm text-[#16a34a]">
             <Eye className="w-4 h-4 mr-2" />
@@ -46,9 +42,7 @@ export function SystemAdminLogin({ onLogin, onBack }) {
           </div>
         </div>
 
-        {
-          /* Login Form */
-        }
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
@@ -84,9 +78,7 @@ export function SystemAdminLogin({ onLogin, onBack }) {
           </Button>
         </form>
 
-        {
-          /* Footer Notice */
-        }
+
         <div className="mt-6 pt-6 border-t">
           <p className="text-xs text-slate-500 text-center">
             All monitoring activities are logged for audit compliance

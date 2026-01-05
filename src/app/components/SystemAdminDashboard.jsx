@@ -72,9 +72,7 @@ export function SystemAdminDashboard({ onLogout }) {
     }
   };
   return <div className="min-h-screen bg-background">
-    {
-      /* Header */
-    }
+
     <header className="bg-[#16a34a] text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -100,9 +98,7 @@ export function SystemAdminDashboard({ onLogout }) {
     </header>
 
     <div className="max-w-7xl mx-auto p-6">
-      {
-        /* Status Cards */
-      }
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 border-l-4 border-l-[#16a34a]">
           <div className="flex items-center justify-between">
@@ -142,9 +138,7 @@ export function SystemAdminDashboard({ onLogout }) {
         </Card>
       </div>
 
-      {
-        /* Navigation Tabs */
-      }
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
         <Button
           onClick={() => setActiveTab("monitoring")}
@@ -188,9 +182,7 @@ export function SystemAdminDashboard({ onLogout }) {
         </Button>
       </div>
 
-      {
-        /* Content Area */
-      }
+
       {activeTab === "monitoring" && <div className="space-y-6">
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
@@ -283,9 +275,7 @@ export function SystemAdminDashboard({ onLogout }) {
             <h2 className="text-[#16a34a]">Cloud Service Health</h2>
           </div>
           <div className="space-y-6">
-            {
-              /* AWS */
-            }
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -474,9 +464,7 @@ export function SystemAdminDashboard({ onLogout }) {
             <h2 className="text-[#16a34a]">Server Health Monitoring</h2>
           </div>
           <div className="space-y-6">
-            {
-              /* Main Server */
-            }
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -491,9 +479,7 @@ export function SystemAdminDashboard({ onLogout }) {
                 <Badge className="bg-[#16a34a] hover:bg-[#16a34a]">Operational</Badge>
               </div>
 
-              {
-                /* CPU Usage */
-              }
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">CPU Usage</span>
@@ -502,9 +488,7 @@ export function SystemAdminDashboard({ onLogout }) {
                 <Progress value={58} className="h-3" />
               </div>
 
-              {
-                /* Memory Usage */
-              }
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Memory Usage</span>
@@ -513,9 +497,7 @@ export function SystemAdminDashboard({ onLogout }) {
                 <Progress value={72} className="h-3" />
               </div>
 
-              {
-                /* Disk Usage */
-              }
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Disk Usage</span>
@@ -524,9 +506,7 @@ export function SystemAdminDashboard({ onLogout }) {
                 <Progress value={85} className="h-3" />
               </div>
 
-              {
-                /* Network Usage */
-              }
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Network Usage</span>
@@ -535,9 +515,7 @@ export function SystemAdminDashboard({ onLogout }) {
                 <Progress value={42} className="h-3" />
               </div>
 
-              {
-                /* Server Details Grid */
-              }
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
                 <div>
                   <p className="text-sm text-slate-500">Uptime</p>
@@ -557,9 +535,7 @@ export function SystemAdminDashboard({ onLogout }) {
                 </div>
               </div>
 
-              {
-                /* Additional Metrics */
-              }
+
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t">
                 <div className="bg-[#dcfce7] border border-[#16a34a]/20 rounded-lg p-3">
                   <p className="text-sm text-slate-500 mb-1">Active Connections</p>

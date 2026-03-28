@@ -11,16 +11,13 @@ export const uploadFile = async (file) => {
   formData.append("file", file);
 
   const response = await api.post("/api/files/upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data; // { message, fileId, fragments, ... }
 };
 
 /**
  * Reconstruct (download) a file by its fileId (Bank Admin only).
- * Returns a Blob so the browser can trigger a file download.
  * @param {string} fileId – MongoDB ObjectId of the file
  * @param {string} filename – original file name for the download prompt
  */
@@ -29,18 +26,31 @@ export const reconstructFile = async (fileId, filename = "download") => {
     responseType: "blob",
   });
 
-  // Strip any existing extension and always save as .csv
-  const baseName = filename.replace(/\.[^/.]+$/, "");
-  const csvFilename = `${baseName}.csv`;
-
-  // Use text/csv MIME type so the browser treats the file correctly
-  const blob = new Blob([response.data], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
+  const url = window.URL.createObjectURL(new Blob([response.data]));
   const link = document.createElement("a");
   link.href = url;
-  link.setAttribute("download", csvFilename);
+  link.setAttribute("download", filename);
   document.body.appendChild(link);
   link.click();
   link.parentNode.removeChild(link);
   window.URL.revokeObjectURL(url);
 };
+
+/**
+ * Fetch all uploaded file records (Bank Admin only).
+ * @returns {Array<{ id, name, type, fragments, cloudDistribution, encrypted, uploaded }>}
+ */
+export const listFiles = async () => {
+  const response = await api.get("/api/files/list");
+  return response.data;
+};
+
+/**
+ * Delete a file record by ID (Bank Admin only).
+ * @param {string} fileId – MongoDB ObjectId of the file
+ */
+export const deleteFile = async (fileId) => {
+  const response = await api.delete(`/api/files/${fileId}`);
+  return response.data;
+};
+

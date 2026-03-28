@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Toaster } from "sonner";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 import { HomeScreen } from "./components/HomeScreen";
 import { BankAdminLogin } from "./components/BankAdminLogin";
 import { SystemAdminLogin } from "./components/SystemAdminLogin";
@@ -7,22 +9,36 @@ import { SystemAdminAuthSuccess } from "./components/SystemAdminAuthSuccess";
 import { BankAdminDashboard } from "./components/BankAdminDashboard";
 import { SystemAdminDashboard } from "./components/SystemAdminDashboard";
 
-export default function App() {
-  const [currentScreen, setCurrentScreen] = useState("home");
+function AppContent() {
+  const { role, login, logout, isAuthenticated } = useAuth();
 
-  const handleRoleSelection = (role) => {
-    if (role === "bank") {
+  // Derive initial screen from persisted role
+  const getInitialScreen = () => {
+    if (!isAuthenticated) return "home";
+    if (role === "BANK_ADMIN") return "bank-dashboard";
+    if (role === "SYSTEM_ADMIN") return "system-dashboard";
+    return "home";
+  };
+
+  const [currentScreen, setCurrentScreen] = useState(getInitialScreen);
+
+  const handleRoleSelection = (selectedRole) => {
+    if (selectedRole === "bank") {
       setCurrentScreen("bank-login");
     } else {
       setCurrentScreen("system-login");
     }
   };
 
-  const handleBankLogin = () => {
+  // Called by BankAdminLogin after a successful API login
+  const handleBankLogin = ({ token, role: userRole }) => {
+    login(token, userRole);
     setCurrentScreen("bank-auth-success");
   };
 
-  const handleSystemLogin = () => {
+  // Called by SystemAdminLogin after a successful API login
+  const handleSystemLogin = ({ token, role: userRole }) => {
+    login(token, userRole);
     setCurrentScreen("system-auth-success");
   };
 
@@ -35,6 +51,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    logout();
     setCurrentScreen("home");
   };
 
@@ -57,8 +74,21 @@ export default function App() {
       {currentScreen === "system-auth-success" && (
         <SystemAdminAuthSuccess onContinue={handleSystemContinue} />
       )}
-      {currentScreen === "bank-dashboard" && <BankAdminDashboard onLogout={handleLogout} />}
-      {currentScreen === "system-dashboard" && <SystemAdminDashboard onLogout={handleLogout} />}
+      {currentScreen === "bank-dashboard" && (
+        <BankAdminDashboard onLogout={handleLogout} />
+      )}
+      {currentScreen === "system-dashboard" && (
+        <SystemAdminDashboard onLogout={handleLogout} />
+      )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+      <Toaster position="top-right" richColors />
+    </AuthProvider>
   );
 }

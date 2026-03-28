@@ -13,9 +13,40 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import { getLogs } from "../../services/logService";
+import { getCloudHealth } from "../../services/cloudService";
 
 export function SystemAdminDashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState("monitoring");
+
+  // ── Cloud health state ────────────────────────────────────────────────────
+  const [cloudHealth, setCloudHealth] = useState([]);
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [cloudError, setCloudError] = useState("");
+
+  const fetchCloudHealth = useCallback(async () => {
+    setCloudLoading(true);
+    setCloudError("");
+    try {
+      const data = await getCloudHealth();
+      setCloudHealth(data);
+    } catch (err) {
+      const message =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Failed to fetch cloud health. Please try again.";
+      setCloudError(message);
+      toast.error(message);
+    } finally {
+      setCloudLoading(false);
+    }
+  }, []);
+
+  // Fetch cloud health when the health tab is opened
+  useEffect(() => {
+    if (activeTab === "health") {
+      fetchCloudHealth();
+    }
+  }, [activeTab, fetchCloudHealth]);
 
   // ── Real logs state ───────────────────────────────────────────────────────
   const [logs, setLogs] = useState([]);
@@ -56,11 +87,19 @@ export function SystemAdminDashboard({ onLogout }) {
     { time: "16:00", encryptions: 85, decryptions: 72 },
     { time: "20:00", encryptions: 68, decryptions: 55 },
   ];
-  const cloudUsageData = [
-    { cloud: "AWS", usage: 324 },
-    { cloud: "Azure", usage: 289 },
-    { cloud: "GCP", usage: 256 },
-  ];
+  // Derive bar-chart data from live cloud health (falls back to 0 when loading)
+  const cloudUsageData = cloudHealth.length > 0
+    ? cloudHealth.map((c) => ({
+        cloud: c.name === "Amazon Web Services (AWS)" ? "AWS"
+             : c.name === "Microsoft Azure" ? "Azure"
+             : "GCP",
+        usage: c.totalSizeMB ?? 0,
+      }))
+    : [
+        { cloud: "AWS",   usage: 0 },
+        { cloud: "Azure", usage: 0 },
+        { cloud: "GCP",   usage: 0 },
+      ];
 
   // ── Log display helpers ────────────────────────────────────────────────────
   const getStatusColor = (status) => {
@@ -214,19 +253,27 @@ export function SystemAdminDashboard({ onLogout }) {
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Cloud className="w-5 h-5 text-[#16a34a]" />
-                <h2 className="text-[#16a34a]">Cloud Storage Distribution</h2>
+                <h2 className="text-[#16a34a]">Cloud Storage Distribution (MB)</h2>
               </div>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={cloudUsageData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e8ecf0" />
-                    <XAxis dataKey="cloud" stroke="#64748b" />
-                    <YAxis stroke="#64748b" />
-                    <Tooltip />
-                    <Bar dataKey="usage" fill="#16a34a" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              {cloudLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-[#16a34a] animate-spin mr-2" />
+                  <span className="text-slate-500 text-sm">Fetching cloud storage data…</span>
+                </div>
+              )}
+              {!cloudLoading && (
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={cloudUsageData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e8ecf0" />
+                      <XAxis dataKey="cloud" stroke="#64748b" />
+                      <YAxis stroke="#64748b" unit=" MB" />
+                      <Tooltip formatter={(value) => [`${value} MB`, "Storage Used"]} />
+                      <Bar dataKey="usage" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </Card>
           </div>
         )}
@@ -355,44 +402,127 @@ export function SystemAdminDashboard({ onLogout }) {
         {activeTab === "health" && (
           <div className="space-y-4">
             <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Server className="w-5 h-5 text-[#16a34a]" />
-                <h2 className="text-[#16a34a]">Cloud Service Health</h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Server className="w-5 h-5 text-[#16a34a]" />
+                  <h2 className="text-[#16a34a]">Cloud Service Health</h2>
+                  <Badge className="bg-[#dcfce7] text-[#16a34a] hover:bg-[#dcfce7]">Live Data</Badge>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={fetchCloudHealth}
+                  disabled={cloudLoading}
+                  className="text-[#16a34a] border-[#16a34a]/20 hover:bg-[#dcfce7]"
+                >
+                  {cloudLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
-              <div className="space-y-6">
-                {[
-                  { name: "Amazon Web Services (AWS)", region: "us-east-1", color: "#ff9900", usage: 68, latency: "24ms", uptime: "99.99%", sync: "2 min ago" },
-                  { name: "Microsoft Azure", region: "eastus", color: "#0078d4", usage: 72, latency: "28ms", uptime: "99.97%", sync: "1 min ago" },
-                  { name: "Google Cloud Platform (GCP)", region: "us-central1", color: "#4285f4", usage: 64, latency: "22ms", uptime: "99.98%", sync: "3 min ago" },
-                ].map((cloud, i) => (
-                  <div key={cloud.name} className={i > 0 ? "border-t pt-6 space-y-2" : "space-y-2"}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${cloud.color}1a` }}>
-                          <Cloud className="w-6 h-6" style={{ color: cloud.color }} />
-                        </div>
-                        <div>
-                          <h3 className="text-[#16a34a]">{cloud.name}</h3>
-                          <p className="text-sm text-slate-500">Region: {cloud.region}</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-[#16a34a] hover:bg-[#16a34a]">Operational</Badge>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Storage Utilization</span>
-                        <span>{cloud.usage}%</span>
-                      </div>
-                      <Progress value={cloud.usage} className="h-2" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div><p className="text-slate-500">Latency</p><p>{cloud.latency}</p></div>
-                      <div><p className="text-slate-500">Uptime</p><p>{cloud.uptime}</p></div>
-                      <div><p className="text-slate-500">Last Sync</p><p>{cloud.sync}</p></div>
-                    </div>
+
+              {/* Loading */}
+              {cloudLoading && (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-8 h-8 text-[#16a34a] animate-spin mr-3" />
+                  <span className="text-slate-500">Connecting to cloud providers…</span>
+                </div>
+              )}
+
+              {/* Error */}
+              {cloudError && !cloudLoading && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2 mb-4">
+                  <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-red-700 font-medium text-sm">Failed to load cloud health</p>
+                    <p className="text-red-500 text-sm">{cloudError}</p>
+                    <Button size="sm" variant="outline" onClick={fetchCloudHealth} className="mt-2 text-red-600 border-red-300 hover:bg-red-50">
+                      Retry
+                    </Button>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Cloud rows */}
+              {!cloudLoading && (
+                <div className="space-y-6">
+                  {(cloudHealth.length > 0 ? cloudHealth : [
+                    { name: "Amazon Web Services (AWS)",    region: "us-east-1",  color: "#ff9900", status: "Loading…", latency: "—", totalObjects: 0, totalSizeMB: 0, lastSync: null, source: "live" },
+                    { name: "Microsoft Azure",              region: "eastus",     color: "#0078d4", status: "Loading…", latency: "—", totalObjects: 0, totalSizeMB: 0, lastSync: null, source: "live" },
+                    { name: "Google Cloud Platform (GCP)",  region: "us-central1",color: "#4285f4", status: "Not Configured", latency: "N/A", totalObjects: 0, totalSizeMB: 0, lastSync: null, source: "static" },
+                  ]).map((cloud, i) => {
+                    const isGCP = cloud.source === "static";
+                    const isError = cloud.status === "Error";
+                    const statusBg = isError
+                      ? "bg-destructive hover:bg-destructive"
+                      : isGCP
+                      ? "bg-slate-400 hover:bg-slate-400"
+                      : "bg-[#16a34a] hover:bg-[#16a34a]";
+                    const lastSyncLabel = cloud.lastSync
+                      ? new Date(cloud.lastSync).toLocaleTimeString()
+                      : "N/A";
+                    // usage% = cap totalSizeMB at some reasonable max (e.g. 500 MB)
+                    const usagePct = isGCP ? 0 : Math.min(100, Math.round((cloud.totalSizeMB / 500) * 100));
+
+                    return (
+                      <div key={cloud.name} className={i > 0 ? "border-t pt-6 space-y-3" : "space-y-3"}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${cloud.color}1a` }}>
+                              <Cloud className="w-6 h-6" style={{ color: cloud.color }} />
+                            </div>
+                            <div>
+                              <h3 className="text-[#16a34a]">{cloud.name}</h3>
+                              <p className="text-sm text-slate-500">Region: {cloud.region}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {!isGCP && (
+                              <Badge variant="outline" className="text-xs text-slate-500 border-slate-300">Live</Badge>
+                            )}
+                            <Badge className={statusBg}>{cloud.status}</Badge>
+                          </div>
+                        </div>
+
+                        {/* Error detail */}
+                        {isError && cloud.error && (
+                          <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded px-3 py-1">
+                            {cloud.error}
+                          </p>
+                        )}
+
+                        {/* Storage bar */}
+                        {!isGCP && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-500">Storage Used</span>
+                              <span>{cloud.totalSizeMB} MB ({cloud.totalObjects} objects)</span>
+                            </div>
+                            <Progress value={usagePct} className="h-2" />
+                          </div>
+                        )}
+                        {isGCP && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-500">Storage Used</span>
+                              <span className="text-slate-400 italic">Not configured</span>
+                            </div>
+                            <Progress value={0} className="h-2" />
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div><p className="text-slate-500">Latency</p><p>{cloud.latency}</p></div>
+                          <div><p className="text-slate-500">Objects</p><p>{isGCP ? "—" : cloud.totalObjects}</p></div>
+                          <div><p className="text-slate-500">Last Sync</p><p>{lastSyncLabel}</p></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
           </div>
         )}

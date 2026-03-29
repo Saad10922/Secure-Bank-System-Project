@@ -54,3 +54,12 @@ export const deleteFile = async (fileId) => {
   return response.data;
 };
 
+/**
+ * Get live fragment counts directly from AWS S3 + Azure Blob Storage.
+ * Bypasses MongoDB so manual cloud deletions are reflected immediately.
+ * @returns {{ aws: number, azure: number, total: number, errors: object }}
+ */
+export const getFragmentStats = async () => {
+  const response = await api.get("/api/files/fragment-stats");
+  return response.data;
+};

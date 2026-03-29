@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "./ui/alert-dialog";
-import { uploadFile, reconstructFile, listFiles, deleteFile } from "../../services/fileService";
+import { uploadFile, reconstructFile, listFiles, deleteFile, getFragmentStats } from "../../services/fileService";
 
 export function BankAdminDashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState("fetch");
@@ -63,10 +63,39 @@ export function BankAdminDashboard({ onLogout }) {
     }
   }, [activeTab, fetchFiles]);
 
+  // ── Live fragment counts from clouds (bypasses MongoDB) ───────────────────
+  // { aws: N, azure: N, total: N, errors: {} }
+  const [fragmentStats, setFragmentStats] = useState(null);
+  const [fragmentStatsLoading, setFragmentStatsLoading] = useState(false);
+  const [fragmentStatsError, setFragmentStatsError] = useState("");
+
+  const fetchFragmentStats = useCallback(async () => {
+    setFragmentStatsLoading(true);
+    setFragmentStatsError("");
+    try {
+      const data = await getFragmentStats();
+      setFragmentStats(data);
+    } catch (err) {
+      const message =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Could not fetch live fragment count.";
+      setFragmentStatsError(message);
+    } finally {
+      setFragmentStatsLoading(false);
+    }
+  }, []);
+
+  // Fetch live fragment stats on component mount
+  useEffect(() => {
+    fetchFragmentStats();
+  }, [fetchFragmentStats]);
+
   // ── Derived stats ─────────────────────────────────────────────────────────
   const totalFiles = fileRecords.length;
-  const totalFragments = fileRecords.reduce((s, r) => s + (r.fragments || 0), 0);
   const uniqueClouds = [...new Set(fileRecords.flatMap((r) => r.cloudDistribution || []))];
+  // Fall back to MongoDB sum only if cloud query fails
+  const mongoFragmentTotal = fileRecords.reduce((s, r) => s + (r.fragments || 0), 0);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleFileChange = (e) => {
@@ -84,8 +113,9 @@ export function BankAdminDashboard({ onLogout }) {
       toast.success(`File uploaded! File ID: ${data.fileId}`);
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      // Refresh the file list in background
+      // Refresh both the file list and live fragment count
       fetchFiles();
+      fetchFragmentStats();
     } catch (err) {
       const message = err.response?.data?.error || err.response?.data?.message || "Upload failed.";
       toast.error(message);
@@ -121,6 +151,8 @@ export function BankAdminDashboard({ onLogout }) {
       await deleteFile(selectedRecord.id);
       toast.success(`"${selectedRecord.name}" deleted successfully.`);
       setFileRecords((prev) => prev.filter((r) => r.id !== selectedRecord.id));
+      // Refresh live cloud fragment count after a DB record is removed
+      fetchFragmentStats();
     } catch (err) {
       const message = err.response?.data?.error || err.response?.data?.message || "Delete failed.";
       toast.error(message);
@@ -289,15 +321,48 @@ export function BankAdminDashboard({ onLogout }) {
           </Card>
           <Card className="p-4 border-l-4 border-l-[#3b82f6]">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500">Total Fragments</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className="text-sm text-slate-500">Total Fragments</p>
+                  {fragmentStatsError && (
+                    <span title={`Cloud query failed: ${fragmentStatsError}. Showing DB estimate.`}>
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-[#3b82f6]">
-                  {filesLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : totalFragments}
+                  {fragmentStatsLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : fragmentStats ? (
+                    <span title={`AWS: ${fragmentStats.aws} · Azure: ${fragmentStats.azure}`}>
+                      {fragmentStats.total}
+                    </span>
+                  ) : (
+                    <span title="Showing DB estimate — cloud query failed" className="text-amber-500">
+                      {mongoFragmentTotal}
+                    </span>
+                  )}
                 </h3>
+                {fragmentStats && !fragmentStatsLoading && (
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    AWS: {fragmentStats.aws} · Azure: {fragmentStats.azure}
+                  </p>
+                )}
               </div>
-              <Upload className="w-8 h-8 text-[#3b82f6]/30" />
+              <div className="flex flex-col items-center gap-1 ml-2">
+                <Upload className="w-8 h-8 text-[#3b82f6]/30" />
+                <button
+                  onClick={fetchFragmentStats}
+                  disabled={fragmentStatsLoading}
+                  title="Refresh live fragment count from clouds"
+                  className="text-[#3b82f6]/50 hover:text-[#3b82f6] transition-colors disabled:opacity-40"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </Card>
+
           <Card className="p-4 border-l-4 border-l-[#f59e0b]">
             <div className="flex items-center justify-between">
               <div>

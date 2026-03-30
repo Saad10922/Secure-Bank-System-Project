@@ -662,7 +662,7 @@ export function BankAdminDashboard({ onLogout }) {
                   <div>
                     <h4 className="text-red-600 mb-1">Critical Warning: Permanent Deletion</h4>
                     <p className="text-sm text-slate-500">
-                      Deleting a record is permanent and cannot be undone. This removes the file entry from the database (cloud fragments are not automatically removed).
+                      Deleting a record is permanent and cannot be undone. This removes the file entry from the database and purges all encrypted fragments from multi-cloud storage.
                     </p>
                   </div>
                 </div>
